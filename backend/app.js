@@ -1,4 +1,5 @@
 import express from "express";
+import "./database/connection/mongo.js"
 
 // Create an instance of an Express app
 const app = express();
