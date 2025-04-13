@@ -1,0 +1,10 @@
+.listing {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .crossover {
+    text-decoration: line-through;
+  }
+  

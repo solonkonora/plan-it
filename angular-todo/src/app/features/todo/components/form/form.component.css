@@ -1,0 +1,14 @@
+.card-layout {
+    width: 500px;
+  }
+  
+  mat-form-field {
+    width: 100%;
+  }
+  
+  mat-card-header {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 20px;
+  }
+  
