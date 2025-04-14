@@ -164,75 +164,67 @@ export class TodosService {
       // Update the signal
       this.todosSig.update(todos =>
         todos.map(todo => (todo._id === id ? updatedTodoFromServer : todo))
-          .sort((a, b) => (a._id < b._id ? -1 : 1)) // Keep sorted
+          .sort((a, b) => (a._id < b._id ? -1 : 1)) 
       );
     } catch (error) {
       console.error(`Failed to toggle todo ${id}:`, error);
-      // Optionally update state to show an error
     }
   }
 
   // UPDATE (Toggle completion status for ALL todos)
-  async toggleAll(isCompleted: boolean): Promise<void> {
-    const currentTodos = this.todosSig();
-    const updatePromises: Promise<TodoInterface | null>[] = []; // Store promises
+async toggleAll(isCompleted: boolean): Promise<void> {
+  const currentTodos = this.todosSig();
+  const todosToUpdate = currentTodos.filter(todo => todo.isCompleted !== isCompleted);
 
-    currentTodos.forEach(todo => {
-      if (todo.isCompleted !== isCompleted) {
-        const updatedTodoPayload = { ...todo, isCompleted };
-        // Create a promise for each fetch request
-        const promise = fetch(`${this.apiUrl}/${todo._id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedTodoPayload),
-        })
-          .then(response => {
-            // Process response within the promise chain
-            if (!response.ok) {
-              console.error(`Failed to toggle todo ${todo._id}. Status: ${response.status}`);
-              // Return null or throw to indicate failure for this specific item
-              return null;
-            }
-            return response.json() as Promise<TodoInterface>; // Return promise for JSON data
-          })
-          .catch(error => {
-            console.error(`Network or processing error toggling todo ${todo._id}:`, error);
-            return null; // Indicate failure
-          });
-        updatePromises.push(promise);
-      }
-    });
-
-    if (updatePromises.length === 0) {
-      return; // Nothing to update
-    }
-
-    try {
-      // Wait for all update fetches to complete
-      const results = await Promise.all(updatePromises);
-
-      // Filter out null results (failed updates)
-      const successfulUpdates = results.filter((res): res is TodoInterface => res !== null);
-
-      if (successfulUpdates.length > 0) {
-        // Update the signal based on successful updates
-        this.todosSig.update(todos => {
-          const updatedMap = new Map(successfulUpdates.map(t => [t._id, t]));
-          return todos.map(t => updatedMap.get(t._id) || { ...t, isCompleted }) // Use updated or set target state
-            .sort((a, b) => (a._id < b._id ? -1 : 1)); // Keep sorted
-        });
-      }
-      // Optionally: Check if results.length !== updatePromises.length to see if some failed
-      if (results.length !== updatePromises.length || results.some(r => r === null)) {
-        console.warn("Some todos failed to toggle.");
-        // You might want to refetch or notify the user more explicitly
-        // await this.fetchTodos(); // Uncomment to refetch for consistency after partial failure
-      }
-
-    } catch (error) {
-      // This catch block might not be hit often for individual HTTP errors
-      // due to the .catch inside the loop, but could catch errors in Promise.all setup
-      console.error('Error processing toggleAll updates:', error);
-    }
+  if (todosToUpdate.length === 0) {
+    console.log("ToggleAll: No todos needed updating.");
+    return;
   }
+
+  // Create promises for each PUT request
+  const updatePromises = todosToUpdate.map(todo => {
+    const updatedTodoPayload = { ...todo, isCompleted }; 
+    return fetch(`${this.apiUrl}/${todo._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedTodoPayload),
+    })
+    .then(response => {
+      if (!response.ok) {
+        console.error(`ToggleAll: Failed backend update for todo ${todo._id}. Status: ${response.status}`);
+      
+        return null; 
+      }
+      return response; 
+    })
+    .catch(error => {
+      console.error(`ToggleAll: Network or processing error for todo ${todo._id}:`, error);
+      return null;
+    });
+  });
+
+  try {
+    // Wait for all update attempts to complete
+    const results = await Promise.all(updatePromises);
+
+    const allFailed = results.every(res => res === null);
+
+    if (allFailed) {
+       console.warn("ToggleAll: All update requests failed or encountered errors. Not refetching.");
+       return;
+    }
+
+    if (results.some(res => res === null)) {
+        console.warn("ToggleAll: Some updates failed, but refetching list for consistency.");
+    } else {
+        console.log("ToggleAll: All updates seemed successful. Refetching list.");
+    }
+
+    await this.fetchTodos();
+
+  } catch (error) {
+    console.error('ToggleAll: Error during Promise.all execution:', error);
+  
+  }
+}
 }
