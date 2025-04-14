@@ -1,26 +1,105 @@
-button.edit {
+li {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    text-decoration: none;
+  }
+  
+  li:last-child {
+    border-bottom: none;
+  }
+  
+  li:hover {
+    background-color: #242121;
+  }
+  
+  .view {
+    display: flex;
+    /* align-items: center; */
+    flex-direction: row;
+  }
+  
+  .toggle {
+    margin-right: 10px;
+  }
+  
+  h3 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-right: 10px;
+  }
+  
+  p {
+    font-size: 16px;
+    color: #080808;
+  }
+/*   
+  .edit {
     background-color: blue;
     color: white;
     border: none;
     padding: 5px 10px;
     cursor: pointer;
     border-radius: 3px;
+    margin-left: 10px;
   }
   
-  button.edit:hover {
+  .edit:hover {
     background-color: darkblue;
-  }  
-
-button.destroy {
+  }
+  
+  .destroy {
     background-color: red;
     color: white;
     border: none;
     padding: 5px 10px;
     cursor: pointer;
     border-radius: 3px;
+    float: right;
   }
   
-  button.destroy:hover {
+  .destroy:hover {
     background-color: darkred;
   }
   
+  .completed {
+    text-decoration: line-through;
+    color: #999;
+  }
+  
+  .editing {
+    background-color: #f0f0f0;
+  }
+  
+  .edit-title {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .edit-description {
+    width: 100%;
+    height: 100px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  button:last-child {
+    width: 100%;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  button:last-child:hover {
+    background-color: #0056b3;
+  }   */
