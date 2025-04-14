@@ -7,6 +7,7 @@ import { TodoComponent } from '../todo/todo.component';
 @Component({
   selector: 'app-todos-main',
   templateUrl: './main.component.html',
+  styleUrls: ['./main.component.css'],
   standalone: true,
   imports: [CommonModule, TodoComponent],
 })
