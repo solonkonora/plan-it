@@ -15,8 +15,8 @@ export class TodosService {
 
   addTodo(text: string): void {
     const newTodo: TodoInterface = {
-      title,
-      description,
+      title:'',
+      description: '',
       isCompleted: false,
       id: Math.random().toString(16),
     };
@@ -25,7 +25,7 @@ export class TodosService {
 
   changeTodo(id: string, title: string, description: string): void {
     this.todosSig.update((todos) =>
-      todos.map((todo) => (todo.id === id ? { ...todo, text } : todo))
+      todos.map((todo) => (todo.id === id ? { ...todo, title, description } : todo))
     );
   }
 
