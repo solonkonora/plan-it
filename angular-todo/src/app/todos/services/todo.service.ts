@@ -1,173 +1,238 @@
-// import { Injectable, signal } from '@angular/core';
-// import { TodoInterface } from '../types/todo.interface';
-// import { FilterEnum } from '../types/filter.enum';
-
-// @Injectable({
-//   providedIn: 'root',
-// })
-// export class TodosService {
-//   todosSig = signal<TodoInterface[]>([]);
-//   filterSig = signal<FilterEnum>(FilterEnum.all);
-
-//   changeFilter(filterName: FilterEnum): void {
-//     this.filterSig.set(filterName);
-//   }
-
-//   addTodo(title: string, description: string): void {
-//     const newTodo: TodoInterface = {
-//       title,
-//       description,
-//       isCompleted: false,
-//       id: Math.random().toString(16),
-//     };
-//     this.todosSig.update((todos) => [...todos, newTodo]);
-//   }
-
-//   changeTodo(id: string, title: string, description: string): void {
-//     this.todosSig.update((todos) =>
-//       todos.map((todo) => (todo.id === id ? { ...todo, title, description } : todo))
-//     );
-//   }
-
-//   removeTodo(id: string): void {
-//     this.todosSig.update((todos) => todos.filter((todo) => todo.id !== id));
-//   }
-
-//   toggleTodo(id: string): void {
-//     this.todosSig.update((todos) =>
-//       todos.map((todo) =>
-//         todo.id === id ? { ...todo, isCompleted: !todo.isCompleted } : todo
-//       )
-//     );
-//   }
-
-//   toggleAll(isCompleted: boolean): void {
-//     this.todosSig.update((todos) =>
-//       todos.map((todo) => ({ ...todo, isCompleted }))
-//     );
-//   }
-// }
-
-import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal, computed } from '@angular/core';
 import { TodoInterface } from '../types/todo.interface';
 import { FilterEnum } from '../types/filter.enum';
-import { catchError, throwError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TodosService {
-  private readonly apiUrl = 'http://localhost:3000/api/todos'; // Backend API URL
 
-  todosSig = signal<TodoInterface[]>([]);
+  private apiUrl = 'http://localhost:3000/api/todos';
+
+  // Signals for internal state management
+  private todosSig = signal<TodoInterface[]>([]);
   filterSig = signal<FilterEnum>(FilterEnum.all);
 
-  constructor(private http: HttpClient) {}
+  // Public computed signal for components to consume
+  public todos = computed(() => this.todosSig());
 
-  // Fetch all todos from the backend
-  fetchTodos(): void {
-    this.http.get<TodoInterface[]>(this.apiUrl)
-      .pipe(
-        catchError((error) => {
-          console.error('Error fetching todos:', error);
-          return throwError(() => error);
-        })
-      )
-      .subscribe((todos) => {
-        this.todosSig.set(todos);
-      });
+  constructor() {
+    // Fetch initial todos when the service is instantiated
+    this.fetchTodos();
   }
 
-  // Add a new todo to the backend
-  addTodo(title: string, description: string): void {
-    const newTodo: Partial<TodoInterface> = {
+  changeFilter(filterName: FilterEnum): void {
+    this.filterSig.set(filterName);
+  }
+
+  // support for Fetch Requests ---
+  private async handleFetchResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`HTTP error! Status: ${response.status}`, errorBody);
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    // Only parse JSON if there's content; DELETE might have no content
+    if (response.status !== 204 /* No Content */) {
+      try {
+        return await response.json() as T;
+      } catch (e) {
+        console.error("Failed to parse JSON response", e);
+        throw new Error("Failed to parse JSON response");
+      }
+    }
+    return undefined as T; // Return undefined for 204 No Content
+  }
+
+  // READ (Fetch all todos from backend)
+  async fetchTodos(): Promise<void> {
+    try {
+      const response = await fetch(this.apiUrl);
+      const todos = await this.handleFetchResponse<TodoInterface[]>(response);
+      // Sort todos (adjust sorting as needed)
+      const sortedTodos = [...todos].sort((a, b) => (a._id < b._id ? -1 : 1));
+      this.todosSig.set(sortedTodos);
+    } catch (error) {
+      console.error('Failed to fetch todos:', error);
+      // Optionally update state to show an error
+    }
+  }
+
+  // CREATE (Add a new todo)
+  async addTodo(title: string, description: string): Promise<void> {
+    const newTodoPayload = {
       title,
       description,
       isCompleted: false,
     };
 
-    this.http.post<TodoInterface>(this.apiUrl, newTodo)
-      .pipe(
-        catchError((error) => {
-          console.error('Error adding todo:', error);
-          return throwError(() => error);
-        })
-      )
-      .subscribe((createdTodo) => {
-        this.todosSig.update((todos) => [...todos, createdTodo]);
+    try {
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newTodoPayload),
       });
-  }
 
-  // Update an existing todo in the backend
-  changeTodo(id: string, title: string, description: string): void {
-    const updatedTodo: Partial<TodoInterface> = { title, description };
+      const createdTodo = await this.handleFetchResponse<TodoInterface>(response);
 
-    this.http.put<TodoInterface>(`${this.apiUrl}/${id}`, updatedTodo)
-      .pipe(
-        catchError((error) => {
-          console.error('Error updating todo:', error);
-          return throwError(() => error);
-        })
-      )
-      .subscribe((updatedTodo) => {
-        this.todosSig.update((todos) =>
-          todos.map((todo) => (todo.id === id ? updatedTodo : todo))
-        );
-      });
-  }
-
-  // Remove a todo from the backend
-  removeTodo(id: string): void {
-    this.http.delete(`${this.apiUrl}/${id}`)
-      .pipe(
-        catchError((error) => {
-          console.error('Error removing todo:', error);
-          return throwError(() => error);
-        })
-      )
-      .subscribe(() => {
-        this.todosSig.update((todos) => todos.filter((todo) => todo.id !== id));
-      });
-  }
-
-  // Toggle completion status of a todo in the backend
-  toggleTodo(id: string): void {
-    const todo = this.todosSig().find((t) => t.id === id);
-    if (todo) {
-      const updatedTodo = { ...todo, isCompleted: !todo.isCompleted };
-      this.http.put<TodoInterface>(`${this.apiUrl}/${id}`, updatedTodo)
-        .pipe(
-          catchError((error) => {
-            console.error('Error toggling todo:', error);
-            return throwError(() => error);
-          })
-        )
-        .subscribe(() => {
-          this.todosSig.update((todos) =>
-            todos.map((t) => (t.id === id ? updatedTodo : t))
-          );
-        });
+      // Update the signal
+      this.todosSig.update(todos =>
+        [...todos, createdTodo].sort((a, b) => (a._id < b._id ? -1 : 1))
+      );
+    } catch (error) {
+      console.error('Failed to add todo:', error);
     }
   }
 
-  // Toggle all todos' completion status in the backend
-  toggleAll(isCompleted: boolean): void {
-    const updatedTodos = this.todosSig().map((todo) => ({ ...todo, isCompleted }));
-    updatedTodos.forEach((todo) =>
-      this.http.put<TodoInterface>(`${this.apiUrl}/${todo.id}`, todo)
-        .pipe(
-          catchError((error) => {
-            console.error('Error toggling all todos:', error);
-            return throwError(() => error);
-          })
-        )
-        .subscribe()
-    );
-    this.todosSig.set(updatedTodos);
+  async changeTodo(id: string, title: string, description: string): Promise<void> {
+    const currentTodo = this.todosSig().find(todo => todo._id === id);
+    if (!currentTodo) {
+      console.error(`Todo with id ${id} not found for update.`);
+      return;
+    }
+
+    const updatedTodoPayload: TodoInterface = {
+      ...currentTodo,
+      title,
+      description,
+    };
+
+    try {
+      const response = await fetch(`${this.apiUrl}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedTodoPayload),
+      });
+
+      const updatedTodoFromServer = await this.handleFetchResponse<TodoInterface>(response);
+
+      // Update the signal
+      this.todosSig.update(todos =>
+        todos.map(todo => (todo._id === id ? updatedTodoFromServer : todo))
+          .sort((a, b) => (a._id < b._id ? -1 : 1)) // Keep sorted
+      );
+    } catch (error) {
+      console.error(`Failed to change todo ${id}:`, error);
+    }
   }
 
-  changeFilter(filterName: FilterEnum): void {
-    this.filterSig.set(filterName);
+  async removeTodo(id: string): Promise<void> {
+    try {
+      const response = await fetch(`${this.apiUrl}/${id}`, {
+        method: 'DELETE',
+      });
+
+      // Check response.ok, handleFetchResponse handles throwing error if not ok
+      await this.handleFetchResponse<void>(response); // Expecting no content (204) usually
+
+      // Update the signal
+      this.todosSig.update(todos => todos.filter(todo => todo._id !== id));
+    } catch (error) {
+      console.error(`Failed to remove todo ${id}:`, error);
+      // Optionally update state to show an error
+    }
+  }
+
+  // UPDATE (Toggle completion status of a single todo)
+  async toggleTodo(id: string): Promise<void> {
+    const currentTodo = this.todosSig().find(todo => todo._id === id);
+    if (!currentTodo) {
+      console.error(`Todo with id ${id} not found for toggle.`);
+      return;
+    }
+
+    const updatedTodoPayload: TodoInterface = {
+      ...currentTodo,
+      isCompleted: !currentTodo.isCompleted,
+    };
+
+    try {
+      const response = await fetch(`${this.apiUrl}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedTodoPayload),
+      });
+
+      const updatedTodoFromServer = await this.handleFetchResponse<TodoInterface>(response);
+
+      // Update the signal
+      this.todosSig.update(todos =>
+        todos.map(todo => (todo._id === id ? updatedTodoFromServer : todo))
+          .sort((a, b) => (a._id < b._id ? -1 : 1)) // Keep sorted
+      );
+    } catch (error) {
+      console.error(`Failed to toggle todo ${id}:`, error);
+      // Optionally update state to show an error
+    }
+  }
+
+  // UPDATE (Toggle completion status for ALL todos)
+  async toggleAll(isCompleted: boolean): Promise<void> {
+    const currentTodos = this.todosSig();
+    const updatePromises: Promise<TodoInterface | null>[] = []; // Store promises
+
+    currentTodos.forEach(todo => {
+      if (todo.isCompleted !== isCompleted) {
+        const updatedTodoPayload = { ...todo, isCompleted };
+        // Create a promise for each fetch request
+        const promise = fetch(`${this.apiUrl}/${todo._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedTodoPayload),
+        })
+          .then(response => {
+            // Process response within the promise chain
+            if (!response.ok) {
+              console.error(`Failed to toggle todo ${todo._id}. Status: ${response.status}`);
+              // Return null or throw to indicate failure for this specific item
+              return null;
+            }
+            return response.json() as Promise<TodoInterface>; // Return promise for JSON data
+          })
+          .catch(error => {
+            console.error(`Network or processing error toggling todo ${todo._id}:`, error);
+            return null; // Indicate failure
+          });
+        updatePromises.push(promise);
+      }
+    });
+
+    if (updatePromises.length === 0) {
+      return; // Nothing to update
+    }
+
+    try {
+      // Wait for all update fetches to complete
+      const results = await Promise.all(updatePromises);
+
+      // Filter out null results (failed updates)
+      const successfulUpdates = results.filter((res): res is TodoInterface => res !== null);
+
+      if (successfulUpdates.length > 0) {
+        // Update the signal based on successful updates
+        this.todosSig.update(todos => {
+          const updatedMap = new Map(successfulUpdates.map(t => [t._id, t]));
+          return todos.map(t => updatedMap.get(t._id) || { ...t, isCompleted }) // Use updated or set target state
+            .sort((a, b) => (a._id < b._id ? -1 : 1)); // Keep sorted
+        });
+      }
+      // Optionally: Check if results.length !== updatePromises.length to see if some failed
+      if (results.length !== updatePromises.length || results.some(r => r === null)) {
+        console.warn("Some todos failed to toggle.");
+        // You might want to refetch or notify the user more explicitly
+        // await this.fetchTodos(); // Uncomment to refetch for consistency after partial failure
+      }
+
+    } catch (error) {
+      // This catch block might not be hit often for individual HTTP errors
+      // due to the .catch inside the loop, but could catch errors in Promise.all setup
+      console.error('Error processing toggleAll updates:', error);
+    }
   }
 }

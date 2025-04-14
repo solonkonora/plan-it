@@ -4,55 +4,55 @@ import { TodoInterface } from '../../types/todo.interface';
 import { TodosService } from '../../services/todo.service';
 
 @Component({
-  selector: 'app-todos-todo',
-  templateUrl: './todo.component.html',
-  standalone: true,
-  imports: [CommonModule],
+    selector: 'app-todos-todo',
+    templateUrl: './todo.component.html',
+    standalone: true,
+    imports: [CommonModule],
 })
 export class TodoComponent {
-  @Input({ required: true }) todo!: TodoInterface;
-  @Input({ required: true }) isEditing!: boolean;
-  @Output() setEditingId: EventEmitter<string | null> = new EventEmitter();
+    @Input({ required: true }) todo!: TodoInterface;
+    @Input({ required: true }) isEditing!: boolean;
+    @Output() setEditingId: EventEmitter<string | null> = new EventEmitter();
 
-  @ViewChild('titleInput') titleInput?: ElementRef;
-  @ViewChild('descriptionInput') descriptionInput?: ElementRef;
+    @ViewChild('titleInput') titleInput?: ElementRef;
+    @ViewChild('descriptionInput') descriptionInput?: ElementRef;
 
-  todosService = inject(TodosService);
-  editingTitle = model('');
-  editingDescription = model('');
+    todosService = inject(TodosService);
+    editingTitle = model('');
+    editingDescription = model('');
 
-  ngOnInit(): void {
-    this.editingTitle.set(this.todo.title);
-    this.editingDescription.set(this.todo.description);
-  }
+    ngOnInit(): void {
+        this.editingTitle.set(this.todo.title);
+        this.editingDescription.set(this.todo.description);
+    }
 
-  changeTitle(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    this.editingTitle.set(target.value);
-  }
+    changeTitle(event: Event): void {
+        const target = event.target as HTMLInputElement;
+        this.editingTitle.set(target.value);
+    }
 
-  changeDescription(event: Event): void {
-    const target = event.target as HTMLTextAreaElement;
-    this.editingDescription.set(target.value);
-  }
+    changeDescription(event: Event): void {
+        const target = event.target as HTMLTextAreaElement;
+        this.editingDescription.set(target.value);
+    }
 
-  changeTodo(): void {
-    this.todosService.changeTodo(this.todo.id, this.editingTitle(), this.editingDescription());
-    this.setEditingId.emit(null);
-  }
+    changeTodo(): void {
+        this.todosService.changeTodo(this.todo._id, this.editingTitle(), this.editingDescription());
+        this.setEditingId.emit(null);
+    }
 
-  setTodoInEditMode(): void {
-    this.setEditingId.emit(this.todo.id);
-    setTimeout(() => {
-      this.titleInput?.nativeElement.focus();
-    }, 0);
-  }
+    setTodoInEditMode(): void {
+        this.setEditingId.emit(this.todo._id);
+        setTimeout(() => {
+            this.titleInput?.nativeElement.focus();
+        }, 0);
+    }
 
-  removeTodo(): void {
-    this.todosService.removeTodo(this.todo.id);
-  }
+    removeTodo(): void {
+        this.todosService.removeTodo(this.todo._id);
+    }
 
-  toggleTodo(): void {
-    this.todosService.toggleTodo(this.todo.id);
-  }
+    toggleTodo(): void {
+        this.todosService.toggleTodo(this.todo._id);
+    }
 }
