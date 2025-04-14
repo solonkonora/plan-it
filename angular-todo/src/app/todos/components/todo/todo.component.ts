@@ -1,67 +1,58 @@
-import {
-    Component,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnInit,
-    Output,
-    SimpleChanges,
-    ViewChild,
-    inject,
-  } from '@angular/core';
-  import { TodoInterface } from '../../types/todo.interface';
-  import { CommonModule } from '@angular/common';
-  import { TodosService } from '../../services/todo.service';
-  
-  @Component({
-    selector: 'app-todos-todo',
-    templateUrl: './todo.component.html',
-    standalone: true,
-    imports: [CommonModule],
-  })
-  export class TodoComponent implements OnInit, OnChanges {
-    @Input({ required: true }) todo!: TodoInterface;
-    @Input({ required: true }) isEditing!: boolean;
-    @Output() setEditingId: EventEmitter<string | null> = new EventEmitter();
-  
-    @ViewChild('textInput') textInput?: ElementRef;
-  
-    todosService = inject(TodosService);
-    editingText: string = '';
-  
-    ngOnInit(): void {
-      this.editingText = this.todo.title;
-    }
-  
-    ngOnChanges(changes: SimpleChanges): void {
-      if (changes['isEditing'].currentValue) {
-        setTimeout(() => {
-          this.textInput?.nativeElement.focus();
-        }, 0);
-      }
-    }
-  
-    changeText(event: Event) {
-      const value = (event.target as HTMLInputElement).value;
-      this.editingText = value;
-    }
-  
-    changeTodo(): void {
-      this.todosService.changeTodo(this.todo.id, this.editingText, this.todo.description);
-      this.setEditingId.emit(null);
-    }
-  
-    setTodoInEditMode(): void {
-      this.setEditingId.emit(this.todo.id);
-    }
-  
-    removeTodo(): void {
-      this.todosService.removeTodo(this.todo.id);
-    }
-  
-    toggleTodo(): void {
-      this.todosService.toggleTodo(this.todo.id);
-    }
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, inject, model } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { TodoInterface } from '../../types/todo.interface';
+import { TodosService } from '../../services/todo.service';
+
+@Component({
+  selector: 'app-todos-todo',
+  templateUrl: './todo.component.html',
+  standalone: true,
+  imports: [CommonModule],
+})
+export class TodoComponent {
+  @Input({ required: true }) todo!: TodoInterface;
+  @Input({ required: true }) isEditing!: boolean;
+  @Output() setEditingId: EventEmitter<string | null> = new EventEmitter();
+
+  @ViewChild('titleInput') titleInput?: ElementRef;
+  @ViewChild('descriptionInput') descriptionInput?: ElementRef;
+
+  todosService = inject(TodosService);
+  editingTitle = model('');
+  editingDescription = model('');
+
+  ngOnInit(): void {
+    this.editingTitle.set(this.todo.title);
+    this.editingDescription.set(this.todo.description);
   }
-  
+
+  changeTitle(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.editingTitle.set(target.value);
+  }
+
+  changeDescription(event: Event): void {
+    const target = event.target as HTMLTextAreaElement;
+    this.editingDescription.set(target.value);
+  }
+
+  changeTodo(): void {
+    this.todosService.changeTodo(this.todo.id, this.editingTitle(), this.editingDescription());
+    this.setEditingId.emit(null);
+  }
+
+  setTodoInEditMode(): void {
+    this.setEditingId.emit(this.todo.id);
+    setTimeout(() => {
+      this.titleInput?.nativeElement.focus();
+    }, 0);
+  }
+
+  removeTodo(): void {
+    this.todosService.removeTodo(this.todo.id);
+  }
+
+  toggleTodo(): void {
+    this.todosService.toggleTodo(this.todo.id);
+  }
+}

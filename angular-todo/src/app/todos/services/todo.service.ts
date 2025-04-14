@@ -13,10 +13,10 @@ export class TodosService {
     this.filterSig.set(filterName);
   }
 
-  addTodo(text: string): void {
+  addTodo(title: string, description: string): void {
     const newTodo: TodoInterface = {
-      title:'',
-      description: '',
+      title,
+      description,
       isCompleted: false,
       id: Math.random().toString(16),
     };

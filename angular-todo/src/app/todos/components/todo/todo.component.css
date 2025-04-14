@@ -1,0 +1,26 @@
+button.edit {
+    background-color: blue;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  
+  button.edit:hover {
+    background-color: darkblue;
+  }  
+
+button.destroy {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  
+  button.destroy:hover {
+    background-color: darkred;
+  }
+  
