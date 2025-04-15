@@ -1,0 +1,48 @@
+.header {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+  margin: auto;
+  display: block;
+}
+
+.header h1 {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  width: 300px;
+  justify-self: center;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+.new-todo-title {
+  width: 80%;
+  padding: 10px;
+  font-size: 16px;
+  margin: auto;
+}
+
+.new-todo-description {
+  width: 80%;
+  height: 60px;
+  padding: 10px;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  display: block;
+  margin: auto;
+}
+
+button:hover {
+  background-color: #023a77;
+}

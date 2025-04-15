@@ -1,0 +1,21 @@
+<li [ngClass]="{ editing: isEditing, completed: todo.isCompleted }">
+    <div class="view">
+        <input class="toggle" type="checkbox" [checked]="todo.isCompleted" (change)="toggleTodo()" />
+        <h3>{{ todo.title }}</h3>
+        <p>{{ todo.description }}</p>
+        <button class="edit" (click)="setTodoInEditMode()">Edit</button>
+        <button class="destroy" (click)="removeTodo()">Delete</button>
+    </div>
+    <ng-container *ngIf="isEditing">
+        <div>
+            <label>Title:</label>
+            <input class="edit-title" #titleInput [value]="editingTitle()" (keyup)="changeTitle($event)" />
+        </div>
+        <div>
+            <label>Description:</label>
+            <textarea class="edit-description" #descriptionInput [value]="editingDescription()"
+                (input)="changeDescription($event)"></textarea>
+        </div>
+        <button (click)="changeTodo()">Save Changes</button>
+    </ng-container>
+</li>

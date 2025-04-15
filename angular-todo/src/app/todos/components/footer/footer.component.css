@@ -1,0 +1,48 @@
+.footer {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+    text-align: center;
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  .todo-count {
+    font-size: 16px;
+    color: #666;
+  }
+  
+  .todo-count strong {
+    font-weight: bold;
+  }
+  
+  .filters {
+    list-style: none;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .filters li {
+    margin: 10px;
+  }
+  
+  .filters li:last-child {
+    margin-right: 0;
+  }
+  
+  .filters a {
+    text-decoration: none;
+    color: #666;
+  }
+  
+  .filters a.selected {
+    color: #007bff;
+  }
+  
+  .filters a:hover {
+    color: #0056b3;
+  }
+  

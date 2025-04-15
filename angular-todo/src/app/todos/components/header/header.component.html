@@ -1,0 +1,10 @@
+<header class="header">
+  <h1>todos</h1>
+  <div>
+    <input class="new-todo-title" placeholder="Title" [value]="title" (input)="changeTitle($event)" />
+    <textarea class="new-todo-description" placeholder="Description" [value]="description"
+      (input)="changeDescription($event)"></textarea>
+
+    <button (click)="addTodo()">Add Todo</button>
+  </div>
+</header>
