@@ -1,5 +1,6 @@
 import express from "express";
 import Todo from "../database/schemas/todo.js";
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -25,20 +26,45 @@ router.post('/todos', async (req, res) => {
   }
 });
 
-// Update a todo by ID
 router.put('/todos/:id', async (req, res) => {
-    try {
-      const updatedTodo = await Todo.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        { new: true }
-      );
-      if (!updatedTodo) return res.status(404).json({ error: 'Todo not found' });
-      res.status(200).json(updatedTodo);
-    } catch (err) {
-      res.status(500).json({ error: 'Failed to update todo' });
+  const { id } = req.params;
+  const updateData = {
+    title: req.body.title,
+    description: req.body.description,
+    isCompleted: req.body.isCompleted,
+  };
+
+  Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid Todo ID format' });
+  }
+
+  try {
+    const updatedTodo = await Todo.findByIdAndUpdate(
+      id,
+      updateData,
+      {
+          new: true,
+          runValidators: true
+      }
+    );
+
+    if (!updatedTodo) {
+      return res.status(404).json({ error: 'Todo not found' });
     }
-  });
+
+    res.status(200).json(updatedTodo);
+
+  } catch (err) {
+    console.error("Error updating todo:", err); 
+    if (err.name === 'ValidationError') {
+         return res.status(400).json({ error: 'Validation failed', details: err.errors });
+    }
+
+    res.status(500).json({ error: 'Failed to update todo due to server error' });
+  }
+});
 
   // Delete a todo by ID
   router.delete('/todos/:id', async (req, res) => {
